@@ -1,0 +1,400 @@
+services:
+############################
+# RADARR
+############################
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    networks:
+      - proxy
+    ports:
+      - 7878:7878
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    volumes:
+      - /data/configs/radarr:/config
+      - /data:/data
+      - /mnt/media:/mnt/media
+    restart: unless-stopped
+############################
+# SONARR
+############################
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    networks:
+      - proxy
+    ports:
+      - 8989:8989
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    volumes:
+      - /data/configs/sonarr:/config
+      - /data:/data
+      - /mnt/media:/mnt/media
+    restart: unless-stopped
+############################
+# PROWLARR
+############################
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    networks:
+      - proxy
+    ports:
+      - 9696:9696
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    volumes:
+      - /data/configs/prowlarr:/config
+    restart: unless-stopped
+############################
+# BAZARR
+############################
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    networks:
+      - proxy
+    ports:
+      - 6767:6767
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    volumes:
+      - /data/configs/bazarr:/config
+      - /data:/data
+      - /mnt/media:/mnt/media
+    restart: unless-stopped
+############################
+# LIDARR
+############################
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    networks:
+      - proxy
+    ports:
+      - 8686:8686
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    volumes:
+      - /data/configs/lidarr:/config
+      - /data:/data
+      - /mnt/media:/mnt/media
+    restart: unless-stopped
+############################
+# SABNZBD (Usenet)
+############################
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    networks:
+      - proxy
+    ports:
+      - 8085:8080
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    volumes:
+      - /data/configs/sabnzbd:/config
+      - /mnt/media:/mnt/media
+      - /data/sabnzbd/incomplete:/incomplete
+    restart: unless-stopped
+############################
+# JELLYFIN
+############################
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    networks:
+      - proxy
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    group_add:
+      - "993"
+    volumes:
+      - /data/configs/jellyfin:/config
+      - /data:/data
+      - /mnt/media:/mnt/media
+      - /tmp/jellyfin-transcodes:/config/data/transcodes
+    ports:
+      - 8096:8096
+      - 8920:8920
+      - 7359:7359/udp
+      - 1900:1900/udp
+    devices:
+      - /dev/dri:/dev/dri
+    restart: unless-stopped
+############################
+# JELLYSEERR
+############################
+  jellyseerr:
+    image: ghcr.io/fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    networks:
+      - proxy
+    ports:
+      - 5055:5055
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=Europe/Amsterdam
+    volumes:
+      - /data/configs/jellyseerr:/app/config
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
+    restart: unless-stopped
+
+############################
+# NOTIFIARR
+############################
+  notifiarr:
+    image: golift/notifiarr:latest
+    container_name: notifiarr
+    networks:
+      - proxy
+    hostname: notifiarr
+    ports:
+      - 5454:5454
+    environment:
+      - DN_API_KEY=your-notifiarr-api-key
+      - TZ=Europe/Amsterdam
+    volumes:
+      - /data/configs/notifiarr:/config
+    restart: unless-stopped
+
+############################
+# TDARR
+############################
+  tdarr:
+    image: ghcr.io/haveagitgat/tdarr:latest
+    container_name: tdarr
+    networks:
+      - proxy
+    group_add:
+      - "993"
+    ports:
+      - 8265:8265  # Web UI
+      - 8266:8266  # Server port
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+      - UMASK_SET=002
+      - serverIP=0.0.0.0
+      - serverPort=8266
+      - webUIPort=8265
+      - internalNode=true
+      - inContainer=true
+      - ffmpegVersion=6
+      - nodeName=InternalNode
+    volumes:
+      - /data/configs/tdarr/server:/app/server
+      - /data/configs/tdarr/configs:/app/configs
+      - /data/configs/tdarr/logs:/app/logs
+      - /data:/data
+      - /mnt/media:/mnt/media
+      - /tmp/tdarr:/temp
+      - /usr/lib/x86_64-linux-gnu/dri/radeonsi_drv_video.so:/usr/lib/x86_64-linux-gnu/dri/radeonsi_drv_video.so:ro
+    devices:
+      - /dev/dri:/dev/dri
+    restart: unless-stopped
+
+############################
+# CLOUDFLARED
+############################
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    networks:
+      - proxy
+    command: tunnel --no-autoupdate run --token <your_token_here>
+    restart: unless-stopped
+
+############################
+# WATCHTOWER
+############################
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=Europe/Amsterdam
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_SCHEDULE=0 0 4 * * *
+    restart: unless-stopped
+
+############################
+# UPTIME KUMA
+############################
+  uptime-kuma:
+    image: louislam/uptime-kuma
+    container_name: uptime-kuma
+    volumes:
+      - /data/configs/uptime-kuma:/config
+    ports:
+      - 3001:3001
+    networks:
+      - proxy
+    restart: unless-stopped
+
+############################
+# PROFILARR
+############################
+  profilarr:
+    image: santiagosayshey/profilarr:latest
+    container_name: profilarr
+    volumes:
+      - /data/configs/profilarr:/config
+    ports:
+      - 6868:6868
+    environment:
+      - TZ=Europe/Amsterdam
+      - PROFILARR_PAT=<your_PAT_here>
+    networks:
+      - proxy
+    restart: unless-stopped
+
+############################
+# GLUETUN (VPN)
+############################
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - 8081:8081  # qBittorrent WebUI
+    environment:
+      - VPN_SERVICE_PROVIDER=protonvpn
+      - OPENVPN_USER=<your_user_here>
+      - OPENVPN_PASSWORD=<your_password_here>
+      - SERVER_COUNTRIES=Netherlands
+      - TZ=Europe/Amsterdam
+    volumes:
+      - /data/configs/gluetun:/gluetun
+    networks:
+      - proxy
+    restart: unless-stopped
+
+############################
+# QBITTORRENT
+############################
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    network_mode: service:gluetun
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+      - WEBUI_PORT=8081
+    volumes:
+      - /data/configs/qbittorrent:/config
+      - /mnt/media:/mnt/media
+    depends_on:
+      - gluetun
+    restart: unless-stopped
+
+############################
+# FLARESOLVERR
+############################
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - TZ=Europe/Amsterdam
+    ports:
+      - 8191:8191
+    networks:
+      - proxy
+    restart: unless-stopped
+
+############################
+# EMBY
+############################
+  emby:
+    image: emby/embyserver:latest
+    container_name: emby
+    environment:
+      - UID=1000
+      - GID=1000
+      - TZ=Europe/Amsterdam
+    volumes:
+      - /data/configs/emby:/config
+      - /mnt/media:/mnt/media
+    networks:
+      - proxy
+    ports:
+      - 8097:8096
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "993"
+    restart: unless-stopped
+
+############################
+# HOMEPAGE
+############################
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+      - HOMEPAGE_ALLOWED_HOSTS=<your_host_here>
+    ports:
+      - 3000:3000
+    volumes:
+      - /data/configs/homepage:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /mnt/media:/mnt/media:ro
+    networks:
+      - proxy
+    restart: unless-stopped
+
+############################
+# NETWORKS
+############################
+networks:
+  proxy:
+    name: proxy
+    driver: bridge
